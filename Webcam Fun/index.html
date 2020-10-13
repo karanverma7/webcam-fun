@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cam Fun</title>
+    <style>
+        body {
+            margin: 0px;
+            background-color: teal;
+        }
+        #player {
+            width: 78vw;
+            height: 100vh;
+            background-color: rgba(255,255,255,0.7);
+        }
+        #sidebar {
+            width: 22vw;
+            position: absolute;
+            top: 20px;
+            right: 0px;
+            text-align: center;
+        }
+        #sidebar video {
+            height: 180px;
+            width: 240px;
+            background-color: white;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            border: 2px solid rgb(184, 30, 30);
+        }
+        #sidebar #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+        }
+        #sidebar #controls button{
+            height: 40px;
+            width: 60%;
+            margin: 10px 0px;
+            border-radius: 30px;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            font-weight: 550;
+            color: rgb(231, 231, 231);
+            background-color: rgba(126, 0, 126, 0.7);
+        }
+        #sidebar #controls button:focus{
+            outline-style: none;
+        }
+        #sidebar #controls button:hover{
+            background-color: rgba(126, 0, 126, 1);
+            transform: scale(1.05);
+            cursor: grab;
+        }
+        img {
+            height: 140px;
+            width: 180px;
+            transform: rotate(-2deg);
+            margin-top: 20px;
+            border: none;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        #credit {
+            color: white;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            width: 60%;
+            padding: 7px 0px;
+            font-weight: 550;
+            font-size: 13px;
+            filter: drop-shadow(2px 2px 1px rgba(0,0,0,0.9))
+        }
+    </style>
+</head>
+<body>
+    <section id="player">
+        <canvas height="655" width="1050"></canvas>
+    </section>
+    <section id="sidebar">
+        <video></video>
+        <div id="controls">
+            <button onclick="takePhoto()">Take Photo</button>
+            <button onclick="redEffect()">Night Light</button>
+            <button onclick="rgbEffect()">RGB Split</button>
+        </div>
+        <a id="download">
+            <img id="photo">
+        </a>
+        <div id="credit"> 
+            <svg width="15" height="15" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M232.819 98.333L270.819 47.5H512V0H0V98.333H232.819ZM171.833 34.833H201.833V64.833H171.833V34.833ZM110.292 34.833H140.292V64.833H110.292V34.833ZM48.75 34.833H78.75V64.833H48.75V34.833Z" fill="#F7F7F7"/>
+                <path d="M285.848 77.5L247.848 128.333H0V512H512V77.5H285.848ZM178.337 381.208L157.124 402.421L72.87 318.167L157.124 233.913L178.337 255.126L115.296 318.167L178.337 381.208ZM218.643 434.901L191.358 422.431L292.358 201.431L319.643 213.901L218.643 434.901ZM354.876 402.42L333.663 381.207L396.704 318.166L333.663 255.125L354.876 233.912L439.13 318.166L354.876 402.42Z" fill="#F7F7F7"/>
+            </svg> 
+            Developed by Karan Verma
+        </div>
+        <audio class="snap" src="./snap.mp3" hidden></audio>
+    </section>
+</body>
+<script>
+    const video = document.querySelector('video')
+    const canvas = document.querySelector('canvas')
+    const player = document.querySelector('#player')
+    const snap = document.querySelector('.snap');
+    const image = document.querySelector('img')
+    const download = document.querySelector('a')
+
+    const ctx = canvas.getContext('2d')
+    let red = false
+    let rgb = false
+
+    function getVideo(){
+        navigator.mediaDevices.getUserMedia({video: true, audio: false})
+        .then(data => {
+            video.srcObject = data;
+            video.play()
+        })
+    }
+    
+    function redEffect() {
+        red = !red
+    }
+
+    function rgbEffect() {
+        rgb = !rgb
+    }
+
+    function takePhoto(){
+        snap.currentTime = 0;
+        snap.play();
+        const data = canvas.toDataURL('image/jpeg');
+        image.setAttribute('src', data)
+        image.style.border = '10px solid white'
+        download.href = data
+        download.setAttribute('download', 'funShot');
+    }
+    function paintToCanvas(){
+        setInterval(() => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height) 
+            let pixels = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+            if(red){
+                for (let i = 0; i < pixels.data.length; i+=4) {
+                    pixels.data[i + 0] = pixels.data[i + 0] - 50; // RED
+                    pixels.data[i + 1] = pixels.data[i + 1] - 100; // GREEN
+                    pixels.data[i + 2] = pixels.data[i + 2] * 0.7; // Blue
+                }
+            }
+
+            if(rgb){
+                for (let i = 0; i < pixels.data.length; i+=4) {
+                    pixels.data[i - 150] = pixels.data[i + 0]; // RED
+                    pixels.data[i + 100] = pixels.data[i + 1]; // GREEN
+                    pixels.data[i - 150] = pixels.data[i + 2]; // Blue
+                }
+            }
+            ctx.putImageData(pixels, 0, 0);
+        }, 10)
+    }
+    video.addEventListener('canplay', paintToCanvas)
+
+    getVideo()
+</script>
+</html>
